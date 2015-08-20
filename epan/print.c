@@ -1652,6 +1652,11 @@ static void proto_tree_get_node_field_values(proto_node *node, gpointer data)
     write_field_data_t *call_data;
     field_info *fi;
     gpointer    field_index;
+    GPtrArray* f_nn; //full node name
+    proto_node *nodeF;
+    GString *f_name;
+    gchar * str;
+    gsize j, fnlen;
 
     call_data = (write_field_data_t *)data;
     fi = PNODE_FINFO(node);
@@ -1660,15 +1665,36 @@ static void proto_tree_get_node_field_values(proto_node *node, gpointer data)
     g_assert(fi);
 
     field_index = g_hash_table_lookup(call_data->fields->field_indicies, fi->hfinfo->abbrev);
+    if (NULL==field_index) {
+	/* try full node name.
+	 Search first node */
+	f_nn = g_ptr_array_new();
+	nodeF=node; fnlen=0;
+	while (NULL!=nodeF->parent) {
+	  g_ptr_array_add(f_nn, (gpointer)nodeF->finfo->hfinfo->abbrev);
+	  fnlen+= strlen(nodeF->finfo->hfinfo->abbrev) +1; 
+	  nodeF=nodeF->parent; 
+	}
+	f_name = g_string_new_len(NULL,fnlen);
+	for (j = 0; j < g_ptr_array_len(f_nn); j++ ) {
+                str = (gchar *)g_ptr_array_index(f_nn,f_nn->len - j -1);
+		g_string_append(f_name,str);
+		g_string_append(f_name,"/");
+	}
+	///
+	field_index = g_hash_table_lookup(call_data->fields->field_indicies,
+					  (gpointer)f_name->str);
+	g_ptr_array_free(f_nn, TRUE);
+	g_string_free(f_name,TRUE);
+    }
     if (NULL != field_index) {
         format_field_values(call_data->fields, field_index,
                             get_node_field_value(fi, call_data->edt) /* g_ alloc'd string */
             );
     }
-
     /* Recurse here. */
     if (node->first_child != NULL) {
-        proto_tree_children_foreach(node, proto_tree_get_node_field_values,
+      proto_tree_children_foreach(node, proto_tree_get_node_field_values,
                                     call_data);
     }
 }
