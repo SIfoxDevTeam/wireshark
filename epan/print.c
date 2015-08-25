@@ -1426,6 +1426,29 @@ void output_fields_add(output_fields_t *fields, const gchar *field)
 
 }
 
+#define FNN_DELIM   "/"
+/* Check full node-name field */
+static gboolean
+full_node_name_field_check(void *data)
+{
+    char *cp;
+    char *tok;
+    gboolean ret_state;
+    cp = g_strdup((const gchar*)data);
+    tok = strtok(cp,FNN_DELIM);
+    ret_state=TRUE;
+    
+    while (tok){
+        if (!proto_registrar_get_byname(tok)) {
+            g_warning("'%s' isn't a valid field!", tok);
+            ret_state=FALSE;
+        }
+        tok = strtok(NULL, FNN_DELIM);
+    }
+    g_free(cp);
+    return ret_state;
+}
+
 static void
 output_field_check(void *data, void *user_data)
 {
@@ -1435,10 +1458,8 @@ output_field_check(void *data, void *user_data)
     if (!strncmp(field, COLUMN_FIELD_FILTER, strlen(COLUMN_FIELD_FILTER)))
         return;
 
-    if (!proto_registrar_get_byname(field)) {
-        g_warning("'%s' isn't a valid field!", field);
+    if (!full_node_name_field_check(field))
         *all_valid = FALSE;
-    }
 
 }
 

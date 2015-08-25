@@ -1962,12 +1962,12 @@ main(int argc, char *argv[])
   /* At this point MATE will have registered its field array so we can
      check if the fields specified by the user are all good.
    */
-  /* TODO: Restore this check for full node names!!!!!!!!
+  
   if (!output_fields_valid(output_fields)) {
     cmdarg_err("Some fields aren't valid");
     return 1;
   }
-  */
+  
 
 #ifdef HAVE_LIBPCAP
   /* We currently don't support taps, or printing dissected packets,
